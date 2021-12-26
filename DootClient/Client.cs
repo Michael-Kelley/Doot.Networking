@@ -47,15 +47,5 @@ namespace Doot
         {
             client.Close();
         }
-
-        public async Task<ulong> CallTestFunc()
-        {
-            return (ulong)await CallRemoteProcedure("test_func");
-        }
-
-        public async Task<double> CallAnotherTestFunc(long arg1, double arg2, string arg3)
-        {
-            return (double)await CallRemoteProcedure("another_test_func", arg1, arg2, arg3);
-        }
     }
 }
