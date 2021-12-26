@@ -115,7 +115,6 @@ namespace Doot
                     default:
                         {
                             throw new ArgumentException($"Unsupported RPC argument '{argType}'!");
-                            break;
                         }
                 }
             }
