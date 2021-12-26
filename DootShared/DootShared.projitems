@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)FileLogWriter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MessageDeserialiser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MessageSerialiser.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)StreamLogWriter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ConsoleLogWriter.cs" />

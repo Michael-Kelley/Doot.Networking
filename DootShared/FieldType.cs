@@ -8,6 +8,7 @@ namespace Doot
 {
     enum FieldType : byte
     {
+        Null,
         UInt64,
         Int64,
         Double,

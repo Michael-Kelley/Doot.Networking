@@ -12,145 +12,86 @@ namespace Doot
 {
     public class Session
     {
-        const int READ_BLOCK_SIZE = 4096;
-        const int WRITE_BLOCK_SIZE = 4096;
-
         readonly TcpClient client;
         readonly NetworkStream stream;
-        readonly byte[] readBuf, writeBuf;
-        readonly MessageSerialiser readSerialiser, writeSerialiser;
+        readonly MessageDeserialiser deserialiser;
+        int readIndex;
+        readonly MessageSerialiser serialiser;
 
         public Session(TcpClient client)
         {
             this.client = client;
             stream = client.GetStream();
-            readBuf = new byte[READ_BLOCK_SIZE];
-            writeBuf = new byte[WRITE_BLOCK_SIZE];
-            readSerialiser = new MessageSerialiser(readBuf);
-            writeSerialiser = new MessageSerialiser(writeBuf);
+            deserialiser = new MessageDeserialiser();
+            readIndex = 0;
+            serialiser = new MessageSerialiser();
         }
 
         public async void Receive(CancellationToken cancellation)
         {
-            var read = await stream.ReadAsync(readBuf, readSerialiser.Position, READ_BLOCK_SIZE - readSerialiser.Position, cancellation);
+            var read = await stream.ReadAsync(deserialiser.Buffer, readIndex, MessageDeserialiser.MAXIMUM_MESSAGE_SIZE - readIndex, cancellation);
 
             //var s = Encoding.UTF8.GetString(readBuf, 0, read);
 
             if (read == 0)
                 return;
 
-            var available = readSerialiser.Position + read;
-
-            if (available < 5)
-            {
-                readSerialiser.Position = available;
-                _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
-                return;
-            }
+            readIndex += read;
+            var available = readIndex;
 
             for (; ; )
             {
-                readSerialiser.Read(out MessageType messageType);
-                available -= sizeof(MessageType);
-                readSerialiser.Read(out int length);
-                available -= sizeof(int);
-
-                if (available < length)
-                {
-                    _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
-                    return;
-                }
+                var messageType = deserialiser.GetNextMessageType();
 
                 switch (messageType)
                 {
                     case MessageType.RpcRequest:
                         {
-                            readSerialiser.Read(out ulong serial);
-                            readSerialiser.Read(out string funcName);
-                            readSerialiser.Read(out byte argCount);
-                            var args = new object[argCount];
-
-                            for (int i = 0; i < argCount; i++)
+                            if (!deserialiser.TryDeserialiseRPCRequest(available, out var serial, out var funcName, out var arguments, out var consumed))
                             {
-                                readSerialiser.Read(out FieldType argType);
-
-                                switch (argType)
-                                {
-                                    case FieldType.UInt64:
-                                        {
-                                            readSerialiser.Read(out ulong fieldValue);
-                                            args[i] = fieldValue;
-                                            break;
-                                        }
-                                    case FieldType.Int64:
-                                        {
-                                            readSerialiser.Read(out long fieldValue);
-                                            args[i] = fieldValue;
-                                            break;
-                                        }
-                                    case FieldType.Double:
-                                        {
-                                            readSerialiser.Read(out double fieldValue);
-                                            args[i] = fieldValue;
-                                            break;
-                                        }
-                                    case FieldType.String:
-                                        {
-                                            readSerialiser.Read(out string fieldValue);
-                                            args[i] = fieldValue;
-                                            break;
-                                        }
-                                }
+                                _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+                                return;
                             }
 
-                            Logger.Log(LogCategory.Debug, $"RPC request: [{serial}] {funcName}({String.Join(',', args)})");
+                            Logger.Log(LogCategory.Debug, $"RPC request: [{serial}] {funcName}({String.Join(',', arguments)})");
 
-                            writeSerialiser.Rewind();
-                            writeSerialiser.Write(MessageType.RpcResponse);
-                            writeSerialiser.Skip(sizeof(int));  // Skip length for now
-                            writeSerialiser.Write(serial);
+                            object returnValue = null;
 
+                            // TODO: Change this so that it passes off the RPC arguments to a registered handler
                             if (funcName == "test_func")
                             {
-                                writeSerialiser.Write(FieldType.Int64);
-                                writeSerialiser.Write(42UL);
+                                returnValue = 42UL;
                             }
-                            else if(funcName == "another_test_func")
+                            else if (funcName == "another_test_func")
                             {
-                                writeSerialiser.Write(FieldType.Double);
-                                writeSerialiser.Write(123.456);
-                            } else
-                            {
-                                // TODO: Change this so that it passes off the RPC arguments to a registered handler
+                                returnValue = 123.456;
                             }
 
-                            var responseLength = writeSerialiser.Position;
-                            writeSerialiser.Position = sizeof(MessageType);
-                            writeSerialiser.Write(responseLength - (sizeof(MessageType) + sizeof(int)));    // Length
+                            var response = serialiser.SerialiseRPCResponse(serial, returnValue);
 
-                            await stream.WriteAsync(writeBuf, 0, responseLength, cancellation);
+                            await stream.WriteAsync(response.Data, 0, response.Length, cancellation);
+
+                            available -= consumed;
 
                             break;
                         }
                     default:
                         {
-                            readSerialiser.Skip(length);
-                            Logger.Log(LogCategory.Error, "Unknown message type! Skipping...");
+                            Logger.Log(LogCategory.Error, $"Unknown message type '{messageType}'! Skipping...");
+                            deserialiser.SkipMessage(out var consumed);
+                            available -= consumed;
                             goto Next;
                         }
                 }
 
                 Next:
 
-                available -= length;
-
                 if (available == 0)
                     break;
             }
 
-            End:
-
-            readSerialiser.Rewind();
+            deserialiser.Rewind();
+            readIndex = 0;
             _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
         }
     }

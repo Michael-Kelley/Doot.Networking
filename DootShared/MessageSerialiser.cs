@@ -1,70 +1,141 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 
 
 
 namespace Doot
 {
-    public class MessageSerialiser
+    class MessageSerialiser
     {
-        public int Position;
+        const int MAXIMUM_MESSAGE_SIZE = 4096;
 
-        readonly byte[] buffer;
+        readonly byte[] writeBuffer;
+        int position;
 
-        public MessageSerialiser(byte[] buffer)
+        public MessageSerialiser()
         {
-            this.buffer = buffer;
-            Position = 0;
+            writeBuffer = new byte[MAXIMUM_MESSAGE_SIZE];
+            position = 0;
         }
 
-        public void Rewind()
+        public (byte[] Data, int Length) SerialiseRPCRequest(ulong serial, string funcName, object[] arguments)
         {
-            Position = 0;
-        }
+            position = 0;
+            Write(MessageType.RpcRequest);
+            Skip(sizeof(int));  // Skip length for now
+            Write(serial);
+            Write(funcName);
+            Write((byte)arguments.Length);
 
-        public void Skip(int count)
-        {
-            Position += count;
-        }
-
-        public void Read<T>(out T outValue) where T : unmanaged
-        {
-            unsafe
+            for (int i = 0; i < arguments.Length; i++)
             {
-                fixed (byte* ptr = &buffer[Position])
+                var obj = arguments[i];
+
+                if (obj is ulong u64Obj)
                 {
-                    outValue = *(T*)ptr;
-                    Position += sizeof(T);
+                    Write((byte)FieldType.UInt64);
+                    Write(u64Obj);
+                }
+                else if (obj is long i64Obj)
+                {
+                    Write((byte)FieldType.Int64);
+                    Write(i64Obj);
+                }
+                else if (obj is double f64Obj)
+                {
+                    Write((byte)FieldType.Double);
+                    Write(f64Obj);
+                }
+                else if (obj is string sObj)
+                {
+                    Write((byte)FieldType.String);
+                    Write(sObj);
+                }
+                else
+                {
+                    throw new ArgumentException($"Unsupported argument type: {obj.GetType()}", "args");
                 }
             }
+
+            // Write length
+            var length = position;
+            position = sizeof(MessageType);
+            Write(length - (sizeof(MessageType) + sizeof(int)));
+
+            return (writeBuffer, length);
         }
 
-        public void Read(out string outValue)
+        public (byte[] Data, int Length) SerialiseRPCResponse(ulong serial, object returnValue)
         {
-            Read(out int length);
-            outValue = Encoding.UTF8.GetString(buffer, Position, length);
-            Position += length;
+            position = 0;
+            Write(MessageType.RpcResponse);
+            Skip(sizeof(int));  // Skip length for now
+            Write(serial);
+
+            if (returnValue == null)
+            {
+                Write(FieldType.Null);
+            }
+            else if (returnValue is ulong u64ReturnValue)
+            {
+                Write(FieldType.UInt64);
+                Write(u64ReturnValue);
+            }
+            else if (returnValue is long i64ReturnValue)
+            {
+                Write(FieldType.Int64);
+                Write(i64ReturnValue);
+            }
+            else if (returnValue is double f64ReturnValue)
+            {
+                Write(FieldType.Double);
+                Write(f64ReturnValue);
+            }
+            else if (returnValue is string sReturnValue)
+            {
+                Write(FieldType.String);
+                Write(sReturnValue);
+            }
+            else
+            {
+                throw new ArgumentException("Unsupported return type!", "returnValue");
+            }
+
+            var length = position;
+            position = sizeof(MessageType);
+            Write(length - (sizeof(MessageType) + sizeof(int)));    // Length
+
+            return (writeBuffer, length);
         }
 
-        public void Write<T>(T value) where T : unmanaged
+        void Skip(int count)
+        {
+            position += count;
+        }
+
+        void Write<T>(T value) where T : unmanaged
         {
             unsafe
             {
-                fixed(byte* ptr = &buffer[Position])
+                fixed (byte* ptr = &writeBuffer[position])
                 {
                     *(T*)ptr = value;
-                    Position += sizeof(T);
+                    position += sizeof(T);
                 }
             }
         }
 
-        public void Write(string value)
+        void Write(byte[] value)
+        {
+            Buffer.BlockCopy(value, 0, writeBuffer, position, value.Length);
+            position += value.Length;
+        }
+
+        void Write(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
             Write(bytes.Length);
-            Buffer.BlockCopy(bytes, 0, buffer, Position, bytes.Length);
-            Position += bytes.Length;
+            Write(bytes);
         }
     }
 }
