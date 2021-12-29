@@ -12,25 +12,31 @@ namespace Doot
 {
     public class Server : IRPCManager
     {
+        internal readonly DatabaseManager Database;
+
         readonly TcpListener listener;
         readonly CancellationToken cancellation;
         readonly List<SessionBase> sessions;
-        readonly Dictionary<string, Func<object[], object>> rpcFunctions;
+        readonly Dictionary<string, Func<SessionBase, object[], object>> rpcFunctions;
 
         public Server(IPAddress bindAddress, int port)
         {
             listener = new TcpListener(bindAddress, port);
             cancellation = new CancellationToken();
             sessions = new List<SessionBase>();
-            rpcFunctions = new Dictionary<string, Func<object[], object>>();
+            rpcFunctions = new Dictionary<string, Func<SessionBase, object[], object>>();
+            Database = new DatabaseManager();
+
+            RegisterRPCFunction("log_in", RPC.LogIn);
+            RegisterRPCFunction("create_account", RPC.CreateAccount);
         }
 
-        public void RegisterRPCFunction(string name, Func<object[], object> function)
+        public void RegisterRPCFunction(string name, Func<SessionBase, object[], object> function)
         {
             rpcFunctions[name] = function;
         }
 
-        public Func<object[], object> GetRPCFunction(string name)
+        public Func<SessionBase, object[], object> GetRPCFunction(string name)
         {
             return rpcFunctions[name];
         }
@@ -49,8 +55,7 @@ namespace Doot
 
                 Logger.Log(LogCategory.Debug, "Client connected");
 
-                var session = new Session(client);
-                session.SetRPCManager(this);
+                var session = new Session(client, this);
                 sessions.Add(session);
 
                 _ = Task.Factory.StartNew(() => session.Receive(cancellation), CancellationToken.None);

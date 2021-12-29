@@ -6,8 +6,12 @@ namespace Doot
 {
     class Session : SessionBase
     {
-        public Session(TcpClient client) : base(client)
+        public Server Server;
+
+        public Session(TcpClient client, Server server) : base(client)
         {
+            Server = server;
+            SetRPCManager(server);
         }
     }
 }

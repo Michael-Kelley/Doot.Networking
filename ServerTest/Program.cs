@@ -6,7 +6,7 @@ namespace Doot.Examples
 {
     public class Program
     {
-        static object TestFunc(object[] args)
+        static object TestFunc(SessionBase session, object[] args)
         {
             /// args: []
             /// return: ulong
@@ -14,7 +14,7 @@ namespace Doot.Examples
             return 42UL;
         }
 
-        static object AnotherTestFunc(object[] args)
+        static object AnotherTestFunc(SessionBase session, object[] args)
         {
             /// args: [long a, double b, string c]
             /// return: double

@@ -14,23 +14,23 @@ namespace Doot
 {
     public class Client : SessionBase, IRPCManager
     {
-        readonly Dictionary<string, Func<object[], object>> rpcFunctions;
+        readonly Dictionary<string, Func<SessionBase, object[], object>> rpcFunctions;
         readonly CancellationToken cancellation;
 
         public Client() : base(new TcpClient())
         {
-            rpcFunctions = new Dictionary<string, Func<object[], object>>();
+            rpcFunctions = new Dictionary<string, Func<SessionBase, object[], object>>();
             cancellation = new CancellationToken();
 
             SetRPCManager(this);
         }
 
-        public void RegisterRPCFunction(string name, Func<object[], object> function)
+        public void RegisterRPCFunction(string name, Func<SessionBase, object[], object> function)
         {
             rpcFunctions[name] = function;
         }
 
-        public Func<object[], object> GetRPCFunction(string name)
+        public Func<SessionBase, object[], object> GetRPCFunction(string name)
         {
             return rpcFunctions[name];
         }
@@ -46,6 +46,16 @@ namespace Doot
         public void Disconnect()
         {
             client.Close();
+        }
+
+        public async Task<long> LogIn(string email, string password)
+        {
+            return (long)await CallRemoteProcedure("log_in", email, password);
+        }
+
+        public async Task<long> CreateAccount(string email, string password)
+        {
+            return (long)await CallRemoteProcedure("create_account", email, password);
         }
     }
 }

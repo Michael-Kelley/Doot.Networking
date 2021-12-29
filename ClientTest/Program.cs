@@ -26,6 +26,27 @@ namespace Doot.Examples
             Logger.Log(LogCategory.Debug, $"Called remote procedure! Result = {result}");
             var result2 = await client.CallAnotherTestFunc(1, 2.3, "four");
             Logger.Log(LogCategory.Debug, $"Called remote procedure! Result = {result2}");
+
+            Logger.Log(LogCategory.Information, "Logging in...");
+            string email = "notarealuser@email.com";
+            string password = "notarealpassword";
+            var userId = await client.LogIn(email, password);
+
+            if (userId == 0)
+            {
+                Logger.Log(LogCategory.Information, "Account does not exist! Creating...");
+                userId = await client.CreateAccount(email, password);
+                Logger.Log(LogCategory.Information, $"Account created! ID: {userId}");
+            }
+            else if (userId == -1)
+            {
+                Logger.Log(LogCategory.Information, "Failed to log in. Incorrect password!");
+            }
+            else
+            {
+                Logger.Log(LogCategory.Information, $"Logged in! ID: {userId}");
+            }
+
             client.Disconnect();
             Console.WriteLine("Press any key to quit...");
             Console.ReadKey();

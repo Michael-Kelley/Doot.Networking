@@ -12,6 +12,8 @@ namespace Doot
 {
     public abstract class SessionBase
     {
+        internal SessionState State;
+
         protected readonly TcpClient client;
 
         protected NetworkStream stream;
@@ -71,7 +73,7 @@ namespace Doot
 
                             Logger.Log(LogCategory.Debug, $"RPC request: [{serial}] {funcName}({String.Join(", ", arguments)})");
 
-                            var returnValue = rpcManager.GetRPCFunction(funcName)(arguments);
+                            var returnValue = rpcManager.GetRPCFunction(funcName)(this, arguments);
                             var response = serialiser.SerialiseRPCResponse(serial, returnValue);
 
                             await stream.WriteAsync(response.Data, 0, response.Length, cancellation);
