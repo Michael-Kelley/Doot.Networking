@@ -152,17 +152,12 @@ namespace Doot
             }
         }
 
-        public void Write(byte[] value)
-        {
-            Buffer.BlockCopy(value, 0, writeBuffer, position, value.Length);
-            position += value.Length;
-        }
-
         public void Write(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
             Write(bytes.Length);
-            Write(bytes);
+            Buffer.BlockCopy(bytes, 0, writeBuffer, position, bytes.Length);
+            position += bytes.Length;
         }
 
         public void Write(ISerialisable value)
