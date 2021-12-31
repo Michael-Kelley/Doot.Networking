@@ -10,7 +10,7 @@ namespace Doot
 {
     public static class Logger
     {
-        static LogCategory logCategory = LogCategory.Information;
+        static LogCategory logCategory = LogCategory.Info;
         static readonly List<ILogWriter> logWriters = new List<ILogWriter>();
         static readonly ConcurrentQueue<(LogCategory Category, DateTime Time, string Message)> queuedMessages = new ConcurrentQueue<(LogCategory, DateTime, string)>();
         static readonly AutoResetEvent logEvent = new AutoResetEvent(false);
@@ -37,6 +37,15 @@ namespace Doot
         public static void Run()
         {
             _ = Task.Factory.StartNew(() => WriteMessages(), TaskCreationOptions.LongRunning);
+        }
+
+        /// <summary>
+        /// Waits for all log messages to be written
+        /// </summary>
+        public static void Wait()
+        {
+            while (queuedMessages.Count > 0)
+                Thread.Sleep(10);
         }
 
         static void WriteMessages()

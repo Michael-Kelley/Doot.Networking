@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 
 
 namespace Doot
 {
-    class MessageDeserialiser
+    public class MessageDeserialiser
     {
         public const int MAXIMUM_MESSAGE_SIZE = 4096;
+
+        readonly static Dictionary<ulong, Func<MessageDeserialiser, ISerialisable>> classDeserialisers = new Dictionary<ulong, Func<MessageDeserialiser, ISerialisable>>();
 
         public byte[] Buffer { get; private set; }
 
@@ -17,6 +20,22 @@ namespace Doot
         {
             Buffer = new byte[MAXIMUM_MESSAGE_SIZE];
             Position = 0;
+        }
+
+        public static void RegisterClass<T>() where T : ISerialisable, new()
+        {
+            classDeserialisers.Add(FNV1a.ComputeHash(typeof(T).FullName), (s) =>
+            {
+                var r = new T();
+                r.Deserialise(s);
+
+                return r;
+            });
+        }
+
+        internal static void ClearRegisteredClasses()
+        {
+            classDeserialisers.Clear();
         }
 
         public MessageType GetNextMessageType()
@@ -88,6 +107,11 @@ namespace Doot
 
                 switch (argType)
                 {
+                    case FieldType.Null:
+                        {
+                            arguments[i] = null;
+                            break;
+                        }
                     case FieldType.UInt64:
                         {
                             Read(out ulong fieldValue);
@@ -109,6 +133,12 @@ namespace Doot
                     case FieldType.String:
                         {
                             Read(out string fieldValue);
+                            arguments[i] = fieldValue;
+                            break;
+                        }
+                    case FieldType.Class:
+                        {
+                            Read(out ISerialisable fieldValue);
                             arguments[i] = fieldValue;
                             break;
                         }
@@ -161,9 +191,14 @@ namespace Doot
 
             Read(out serial);
             Read(out FieldType returnType);
-            
+
             switch (returnType)
             {
+                case FieldType.Null:
+                    {
+                        returnValue = null;
+                        break;
+                    }
                 case FieldType.UInt64:
                     {
                         Read(out ulong value);
@@ -184,50 +219,13 @@ namespace Doot
                     }
                 case FieldType.Class:
                     {
-                        /*var fieldCount = reader.ReadByte();
-                        var fields = new object[fieldCount];
-
-                        for (int i = 0; i < fieldCount; i++)
-                        {
-                            var fieldType = (FieldType)reader.ReadByte();
-
-                            switch (fieldType)
-                            {
-                                case FieldType.UInt64:
-                                    {
-                                        fields[i] = reader.ReadUInt64();
-                                        break;
-                                    }
-                                case FieldType.Int64:
-                                    {
-                                        fields[i] = reader.ReadInt64();
-                                        break;
-                                    }
-                                case FieldType.Double:
-                                    {
-                                        fields[i] = reader.ReadDouble();
-                                        break;
-                                    }
-                                case FieldType.String:
-                                    {
-                                        var fieldValueLength = reader.ReadInt32();
-                                        var fieldValueBytes = reader.ReadBytes(fieldValueLength);
-                                        fields[i] = Encoding.UTF8.GetString(fieldValueBytes);
-                                        break;
-                                    }
-                                default:
-                                    break;
-                            }
-                        }
-
-                        result = fields;*/
-                        returnValue = null;
-
+                        Read(out ISerialisable value);
+                        returnValue = value;
                         break;
                     }
                 default:
                     {
-                        Logger.Log(LogCategory.Error, "Unknown field type!");
+                        Logger.Log(LogCategory.Error, $"Unknown return type '{returnType}'!");
                         returnValue = null;
                         break;
                     }
@@ -243,7 +241,7 @@ namespace Doot
             Position += count;
         }
 
-        void Read<T>(out T outValue) where T : unmanaged
+        public void Read<T>(out T outValue) where T : unmanaged
         {
             unsafe
             {
@@ -255,11 +253,21 @@ namespace Doot
             }
         }
 
-        void Read(out string outValue)
+        public void Read(out string outValue)
         {
             Read(out int length);
             outValue = Encoding.UTF8.GetString(Buffer, Position, length);
             Position += length;
+        }
+
+        public void Read(out ISerialisable outValue)
+        {
+            Read(out ulong classId);
+
+            if (!classDeserialisers.ContainsKey(classId))
+                throw new ArgumentException($"Unregistered deserialisable class '{classId}'!");
+
+            outValue = classDeserialisers[classId](this);
         }
     }
 }

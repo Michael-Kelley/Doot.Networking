@@ -47,6 +47,11 @@
     <Compile Include="Client.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <Import Project="..\DootShared\DootShared.projitems" Label="Shared" />
+  <ItemGroup>
+    <ProjectReference Include="..\DootCommon\DootCommon.csproj">
+      <Project>{8eedf313-568e-496e-8c0c-1653e542108c}</Project>
+      <Name>DootCommon</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

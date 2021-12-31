@@ -12,19 +12,24 @@ namespace Doot
 {
     public class Server : IRPCManager
     {
+        public readonly ManualResetEvent StartedEvent;
+
         internal readonly DatabaseManager Database;
 
         readonly TcpListener listener;
-        readonly CancellationToken cancellation;
+        readonly CancellationTokenSource cancellation;
         readonly List<SessionBase> sessions;
         readonly Dictionary<string, Func<SessionBase, object[], object>> rpcFunctions;
+        readonly ManualResetEvent stoppedEvent;
 
         public Server(IPAddress bindAddress, int port)
         {
             listener = new TcpListener(bindAddress, port);
-            cancellation = new CancellationToken();
+            cancellation = new CancellationTokenSource();
             sessions = new List<SessionBase>();
             rpcFunctions = new Dictionary<string, Func<SessionBase, object[], object>>();
+            StartedEvent = new ManualResetEvent(false);
+            stoppedEvent = new ManualResetEvent(false);
             Database = new DatabaseManager();
 
             RegisterRPCFunction("log_in", RPC.LogIn);
@@ -44,11 +49,21 @@ namespace Doot
         public async Task Run()
         {
             listener.Start();
-            Logger.Log(LogCategory.Information, "Server started");
+            Logger.Log(LogCategory.Info, "Server started");
+            StartedEvent.Set();
 
             for (; ; )
             {
-                var client = await listener.AcceptTcpClientAsync(cancellation);
+                TcpClient client;
+
+                try
+                {
+                    client = await listener.AcceptTcpClientAsync(cancellation.Token);
+                }
+                catch (Exception)
+                {
+                    break;
+                }
 
                 if (client == null)
                     break;
@@ -58,8 +73,17 @@ namespace Doot
                 var session = new Session(client, this);
                 sessions.Add(session);
 
-                _ = Task.Factory.StartNew(() => session.Receive(cancellation), CancellationToken.None);
+                session.ReceiveLoop(cancellation.Token);
             }
+
+            listener.Stop();
+            stoppedEvent.Set();
+        }
+
+        public void Stop()
+        {
+            cancellation.Cancel();
+            stoppedEvent.WaitOne();
         }
     }
 }

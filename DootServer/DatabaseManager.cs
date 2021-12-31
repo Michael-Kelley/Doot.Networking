@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,18 +13,24 @@ namespace Doot
 {
     class DatabaseManager
     {
-        readonly SqliteConnection connection;
+        const int CONNECTION_POOL_SIZE = 10;
+
+        readonly ConcurrentBag<SqliteConnection> connectionsStore;
+        readonly BlockingCollection<SqliteConnection> connections;
 
         public DatabaseManager()
         {
             if (!File.Exists("doot.db"))
             {
-                Logger.Log(LogCategory.Information, "Database not found. Creating...");
+                Logger.Log(LogCategory.Info, "Database not found. Creating...");
                 CreateDatabase();
             }
 
-            connection = new SqliteConnection("Data Source=doot.db");
-            connection.Open();
+            connectionsStore = new ConcurrentBag<SqliteConnection>();
+            connections = new BlockingCollection<SqliteConnection>(connectionsStore, CONNECTION_POOL_SIZE);
+            
+            for (int i = 0; i < CONNECTION_POOL_SIZE; i++)
+                connections.Add(new SqliteConnection("Data Source=doot.db"));
         }
 
         static void CreateDatabase()
@@ -45,6 +52,8 @@ namespace Doot
 
         public long LogIn(string email, string password)
         {
+            var connection = BorrowConnection();
+
             var cmd = connection.CreateCommand();
             cmd.CommandText = @"
                 SELECT id, password
@@ -55,22 +64,32 @@ namespace Doot
             using var reader = cmd.ExecuteReader();
 
             if (!reader.HasRows)
+            {
+                ReturnConnection(connection);
                 return 0;
+            }
 
             reader.Read();
 
             var storedPassword = (string)reader["password"];
 
             if (password != storedPassword)
+            {
+                ReturnConnection(connection);
                 return -1;
+            }
 
             var id = (long)reader["id"];
+
+            ReturnConnection(connection);
 
             return id;
         }
 
         public long CreateAccount(string email, string password)
         {
+            var connection = BorrowConnection();
+
             var cmd = connection.CreateCommand();
             cmd.CommandText = @"
                 SELECT id
@@ -79,7 +98,10 @@ namespace Doot
             var reader = cmd.ExecuteReader();
 
             if (reader.HasRows)
+            {
+                ReturnConnection(connection);
                 return 0;
+            }
 
             reader.Dispose();
 
@@ -92,8 +114,6 @@ namespace Doot
             cmd.ExecuteNonQuery();
 
             cmd = connection.CreateCommand();
-            // TODO: Database queries should be queued and run on a single thread so as not to execute mulitple inserts simultaneously.
-            //   The calling code should await the result.
             cmd.CommandText = @"
                 SELECT last_insert_rowid();";
 
@@ -102,7 +122,23 @@ namespace Doot
             var id = (long)reader[0];
             reader.Dispose();
 
+            ReturnConnection(connection);
+
             return id;
+        }
+
+        SqliteConnection BorrowConnection()
+        {
+            var connection = connections.Take();
+            connection.Open();
+
+            return connection;
+        }
+
+        void ReturnConnection(SqliteConnection connection)
+        {
+            connection.Close();
+            connections.Add(connection);
         }
     }
 }

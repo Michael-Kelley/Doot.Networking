@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-
-
+﻿
 namespace Doot
 {
-    enum FieldType : byte
+    public enum FieldType : byte
     {
         Null,
         UInt64,

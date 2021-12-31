@@ -14,37 +14,43 @@ namespace Doot
 {
     public class Client : SessionBase, IRPCManager
     {
-        readonly Dictionary<string, Func<SessionBase, object[], object>> rpcFunctions;
-        readonly CancellationToken cancellation;
+        internal readonly Dictionary<string, Func<SessionBase, object[], object>> RPCFunctions;
+
+        readonly CancellationTokenSource cancellation;
 
         public Client() : base(new TcpClient())
         {
-            rpcFunctions = new Dictionary<string, Func<SessionBase, object[], object>>();
-            cancellation = new CancellationToken();
+            RPCFunctions = new Dictionary<string, Func<SessionBase, object[], object>>();
+            cancellation = new CancellationTokenSource();
 
             SetRPCManager(this);
         }
 
         public void RegisterRPCFunction(string name, Func<SessionBase, object[], object> function)
         {
-            rpcFunctions[name] = function;
+            RPCFunctions[name] = function;
         }
 
         public Func<SessionBase, object[], object> GetRPCFunction(string name)
         {
-            return rpcFunctions[name];
+            return RPCFunctions[name];
         }
 
         public async Task Connect(string host, int port)
         {
             await client.ConnectAsync(host, port);
+
+            if (client.Connected)
+                State = SessionState.Connected;
+
             stream = client.GetStream();
 
-            _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+            _ = Task.Factory.StartNew(() => Receive(cancellation.Token), CancellationToken.None);
         }
 
         public void Disconnect()
         {
+            cancellation.Cancel();
             client.Close();
         }
 

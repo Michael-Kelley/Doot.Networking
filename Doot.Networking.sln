@@ -9,18 +9,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DootClient", "DootClient\Do
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientExample", "ClientTest\ClientExample.csproj", "{FBA103F9-EC85-4168-B74C-B3466E918AA7}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "DootShared", "DootShared\DootShared.shproj", "{95AD5D83-CAA1-4E9A-A7D6-3EC735803B44}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerExample", "ServerTest\ServerExample.csproj", "{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerExample", "ServerTest\ServerExample.csproj", "{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{0F542DF2-CE5E-4AF6-90C9-3D6CCF8D1122}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{7DE4E2D2-7539-4783-86CE-C10B9CCD7138}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DootCommon", "DootCommon\DootCommon.csproj", "{8EEDF313-568E-496E-8C0C-1653E542108C}"
+EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		DootShared\DootShared.projitems*{759aa4fa-b269-4a6d-a405-38cebe12e1ff}*SharedItemsImports = 4
-		DootShared\DootShared.projitems*{93f35e41-25d1-486f-a51e-141faa4d91d7}*SharedItemsImports = 5
-		DootShared\DootShared.projitems*{95ad5d83-caa1-4e9a-a7d6-3ec735803b44}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -42,6 +39,14 @@ Global
 		{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DE4E2D2-7539-4783-86CE-C10B9CCD7138}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DE4E2D2-7539-4783-86CE-C10B9CCD7138}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DE4E2D2-7539-4783-86CE-C10B9CCD7138}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DE4E2D2-7539-4783-86CE-C10B9CCD7138}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EEDF313-568E-496E-8C0C-1653E542108C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EEDF313-568E-496E-8C0C-1653E542108C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EEDF313-568E-496E-8C0C-1653E542108C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EEDF313-568E-496E-8C0C-1653E542108C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

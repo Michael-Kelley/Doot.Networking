@@ -12,7 +12,7 @@ namespace Doot
 {
     public abstract class SessionBase
     {
-        internal SessionState State;
+        public SessionState State;
 
         protected readonly TcpClient client;
 
@@ -40,14 +40,28 @@ namespace Doot
             rand = new Random();
         }
 
-        internal void SetRPCManager(IRPCManager rpcManager)
+        protected void SetRPCManager(IRPCManager rpcManager)
         {
             this.rpcManager = rpcManager;
         }
 
-        internal async void Receive(CancellationToken cancellation)
+        public void ReceiveLoop(CancellationToken cancellation)
         {
-            var read = await stream.ReadAsync(deserialiser.Buffer, readIndex, MessageDeserialiser.MAXIMUM_MESSAGE_SIZE - readIndex, cancellation);
+            _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+        }
+
+        protected async void Receive(CancellationToken cancellation)
+        {
+            int read;
+
+            try
+            {
+                read = await stream.ReadAsync(deserialiser.Buffer, readIndex, MessageDeserialiser.MAXIMUM_MESSAGE_SIZE - readIndex, cancellation);
+            }
+            catch (Exception)
+            {
+                return;
+            }
 
             //var s = Encoding.UTF8.GetString(readBuf, 0, read);
 
@@ -67,7 +81,7 @@ namespace Doot
                         {
                             if (!deserialiser.TryDeserialiseRPCRequest(available, out var serial, out var funcName, out var arguments, out var consumed))
                             {
-                                _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+                                ReceiveLoop(cancellation);
                                 return;
                             }
 
@@ -86,7 +100,7 @@ namespace Doot
                         {
                             if (!deserialiser.TryDeserialiseRPCResponse(available, out var serial, out var returnValue, out var consumed))
                             {
-                                _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+                                ReceiveLoop(cancellation);
                                 return;
                             }
 
@@ -122,7 +136,7 @@ namespace Doot
 
             deserialiser.Rewind();
             readIndex = 0;
-            _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+            ReceiveLoop(cancellation);
         }
 
         public Task<object> CallRemoteProcedure(string name, params object[] arguments)

@@ -15,12 +15,12 @@ namespace Doot
                 case LogCategory.Error:
                     Console.ForegroundColor = ConsoleColor.Red;
                     break;
-                case LogCategory.Warning:
+                case LogCategory.Warn:
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     break;
             }
 
-            Console.WriteLine($"[{time:u}] [{category}] {message}");
+            Console.WriteLine($"{time:G} | {category,-5} | {message}");
             Console.ForegroundColor = fg;
         }
     }

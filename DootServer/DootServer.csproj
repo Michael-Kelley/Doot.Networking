@@ -18,10 +18,12 @@
     <DefineConstants>$(DefineConstants);DOOT_SERVER</DefineConstants>
   </PropertyGroup>
 
-  <Import Project="..\DootShared\DootShared.projitems" Label="Shared" />
-
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DootCommon\DootCommon.csproj" />
   </ItemGroup>
 
 </Project>

@@ -55,6 +55,10 @@
       <Project>{759aa4fa-b269-4a6d-a405-38cebe12e1ff}</Project>
       <Name>DootClient</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DootCommon\DootCommon.csproj">
+      <Project>{8eedf313-568e-496e-8c0c-1653e542108c}</Project>
+      <Name>DootCommon</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

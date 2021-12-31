@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 
 
 namespace Doot
 {
-    class MessageSerialiser
+    public class MessageSerialiser
     {
         const int MAXIMUM_MESSAGE_SIZE = 4096;
+
+        readonly static Dictionary<Type, ulong> classIds = new Dictionary<Type, ulong>();
 
         readonly byte[] writeBuffer;
         int position;
@@ -16,6 +19,16 @@ namespace Doot
         {
             writeBuffer = new byte[MAXIMUM_MESSAGE_SIZE];
             position = 0;
+        }
+
+        public static void RegisterClass<T>()
+        {
+            classIds.Add(typeof(T), FNV1a.ComputeHash(typeof(T).FullName));
+        }
+
+        internal static void ClearRegisteredClasses()
+        {
+            classIds.Clear();
         }
 
         public (byte[] Data, int Length) SerialiseRPCRequest(ulong serial, string funcName, object[] arguments)
@@ -31,25 +44,34 @@ namespace Doot
             {
                 var obj = arguments[i];
 
+                if (obj == null)
+                {
+                    Write(FieldType.Null);
+                }
                 if (obj is ulong u64Obj)
                 {
-                    Write((byte)FieldType.UInt64);
+                    Write(FieldType.UInt64);
                     Write(u64Obj);
                 }
                 else if (obj is long i64Obj)
                 {
-                    Write((byte)FieldType.Int64);
+                    Write(FieldType.Int64);
                     Write(i64Obj);
                 }
                 else if (obj is double f64Obj)
                 {
-                    Write((byte)FieldType.Double);
+                    Write(FieldType.Double);
                     Write(f64Obj);
                 }
                 else if (obj is string sObj)
                 {
-                    Write((byte)FieldType.String);
+                    Write(FieldType.String);
                     Write(sObj);
+                }
+                else if (obj is ISerialisable zObj)
+                {
+                    Write(FieldType.Class);
+                    Write(zObj);
                 }
                 else
                 {
@@ -96,9 +118,14 @@ namespace Doot
                 Write(FieldType.String);
                 Write(sReturnValue);
             }
+            else if (returnValue is ISerialisable zReturnValue)
+            {
+                Write(FieldType.Class);
+                Write(zReturnValue);
+            }
             else
             {
-                throw new ArgumentException("Unsupported return type!", "returnValue");
+                throw new ArgumentException("Unsupported return type!", nameof(returnValue));
             }
 
             var length = position;
@@ -113,7 +140,7 @@ namespace Doot
             position += count;
         }
 
-        void Write<T>(T value) where T : unmanaged
+        public void Write<T>(T value) where T : unmanaged
         {
             unsafe
             {
@@ -125,17 +152,26 @@ namespace Doot
             }
         }
 
-        void Write(byte[] value)
+        public void Write(byte[] value)
         {
             Buffer.BlockCopy(value, 0, writeBuffer, position, value.Length);
             position += value.Length;
         }
 
-        void Write(string value)
+        public void Write(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
             Write(bytes.Length);
             Write(bytes);
+        }
+
+        public void Write(ISerialisable value)
+        {
+            if (!classIds.ContainsKey(value.GetType()))
+                throw new Exception($"Unregistered serialisable class '{value.GetType().FullName}'!");
+
+            Write(classIds[value.GetType()]);
+            value.Serialise(this);
         }
     }
 }
