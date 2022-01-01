@@ -26,11 +26,6 @@ namespace Doot
             classIds.Add(typeof(T), FNV1a.ComputeHash(typeof(T).FullName));
         }
 
-        internal static void ClearRegisteredClasses()
-        {
-            classIds.Clear();
-        }
-
         public (byte[] Data, int Length) SerialiseRPCRequest(ulong serial, string funcName, object[] arguments)
         {
             position = 0;

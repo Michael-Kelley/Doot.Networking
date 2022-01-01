@@ -33,11 +33,6 @@ namespace Doot
             });
         }
 
-        internal static void ClearRegisteredClasses()
-        {
-            classDeserialisers.Clear();
-        }
-
         public MessageType GetNextMessageType()
         {
             return (MessageType)Buffer[Position];

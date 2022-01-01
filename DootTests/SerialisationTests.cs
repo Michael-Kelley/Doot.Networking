@@ -286,5 +286,48 @@ namespace Doot.Tests
 
             Assert.AreEqual(value, readValue);
         }
+
+        [TestMethod]
+        public void Serialise_Request_DeserialisesSame()
+        {
+            var serialiser = new MessageSerialiser();
+            var deserialiser = new MessageDeserialiser();
+            var serial = 123456789UL;
+            var funcName = "not_a_real_function";
+            var arg1 = 42L;
+            var arg2 = "forty two";
+
+            var (data, length) = serialiser.SerialiseRPCRequest(serial, funcName, new object[] { arg1, arg2 });
+            Buffer.BlockCopy(data, 0, deserialiser.Buffer, 0, length);
+
+            var res = deserialiser.TryDeserialiseRPCRequest(length, out var readSerial, out var readFuncName, out var readArgs, out _);
+
+            Assert.IsTrue(res);
+            Assert.AreEqual(serial, readSerial);
+            Assert.AreEqual(funcName, readFuncName);
+            Assert.AreEqual(readArgs.Length, 2);
+            var (readArg1, readArg2) = readArgs.ToValueTuple<long, string>();
+            Assert.AreEqual(arg1, readArg1);
+            Assert.AreEqual(arg2, readArg2);
+        }
+
+        [TestMethod]
+        public void Serialise_Response_DeserialisesSame()
+        {
+            var serialiser = new MessageSerialiser();
+            var deserialiser = new MessageDeserialiser();
+            var serial = 123456789UL;
+            var returnValue = 42L;
+
+            var (data, length) = serialiser.SerialiseRPCResponse(serial, returnValue);
+            Buffer.BlockCopy(data, 0, deserialiser.Buffer, 0, length);
+
+            var res = deserialiser.TryDeserialiseRPCResponse(length, out var readSerial, out var readReturnValue, out _);
+
+            Assert.IsTrue(res);
+            Assert.AreEqual(serial, readSerial);
+            Assert.IsTrue(readReturnValue is long);
+            Assert.AreEqual(returnValue, (long)readReturnValue);
+        }
     }
 }
