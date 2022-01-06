@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DootCommon\DootCommon.csproj" />
-    <ProjectReference Include="..\DootServer\DootServer.csproj" />
+    <ProjectReference Include="..\..\DootCommon\DootCommon.csproj" />
+    <ProjectReference Include="..\..\DootServer\DootServer.csproj" />
   </ItemGroup>
 
 </Project>

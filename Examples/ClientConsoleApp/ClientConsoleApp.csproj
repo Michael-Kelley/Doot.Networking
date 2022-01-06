@@ -51,11 +51,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DootClient\DootClient.csproj">
+    <ProjectReference Include="..\..\DootClient\DootClient.csproj">
       <Project>{759aa4fa-b269-4a6d-a405-38cebe12e1ff}</Project>
       <Name>DootClient</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DootCommon\DootCommon.csproj">
+    <ProjectReference Include="..\..\DootCommon\DootCommon.csproj">
       <Project>{8eedf313-568e-496e-8c0c-1653e542108c}</Project>
       <Name>DootCommon</Name>
     </ProjectReference>

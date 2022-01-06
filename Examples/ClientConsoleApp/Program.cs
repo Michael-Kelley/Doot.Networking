@@ -48,6 +48,9 @@ namespace Doot.Examples
             }
 
             client.Disconnect();
+
+            Logger.Wait();
+
             Console.WriteLine("Press any key to quit...");
             Console.ReadKey();
         }

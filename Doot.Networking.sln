@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DootServer", "DootServer\Do
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DootClient", "DootClient\DootClient.csproj", "{759AA4FA-B269-4A6D-A405-38CEBE12E1FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientExample", "ClientTest\ClientExample.csproj", "{FBA103F9-EC85-4168-B74C-B3466E918AA7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientConsoleApp", "Examples\ClientConsoleApp\ClientConsoleApp.csproj", "{FBA103F9-EC85-4168-B74C-B3466E918AA7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerExample", "ServerTest\ServerExample.csproj", "{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerConsoleApp", "Examples\ServerConsoleApp\ServerConsoleApp.csproj", "{5FA6BA93-FFF7-4D6E-8717-D4FD455F4521}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{0F542DF2-CE5E-4AF6-90C9-3D6CCF8D1122}"
 EndProject
