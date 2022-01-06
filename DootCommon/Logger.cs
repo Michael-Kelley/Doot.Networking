@@ -14,6 +14,7 @@ namespace Doot
         static readonly List<ILogWriter> logWriters = new List<ILogWriter>();
         static readonly ConcurrentQueue<(LogCategory Category, DateTime Time, string Message)> queuedMessages = new ConcurrentQueue<(LogCategory, DateTime, string)>();
         static readonly AutoResetEvent logEvent = new AutoResetEvent(false);
+        static readonly ManualResetEvent doneEvent = new ManualResetEvent(true);
 
         public static void SetLogCategory(LogCategory value)
         {
@@ -31,6 +32,7 @@ namespace Doot
                 return;
 
             queuedMessages.Enqueue((category, DateTime.Now, message));
+            doneEvent.Reset();
             logEvent.Set();
         }
 
@@ -44,8 +46,7 @@ namespace Doot
         /// </summary>
         public static void Wait()
         {
-            while (queuedMessages.Count > 0)
-                Thread.Sleep(10);
+            doneEvent.WaitOne();
         }
 
         static void WriteMessages()
@@ -58,7 +59,9 @@ namespace Doot
                     w.Write(message.Category, message.Time, message.Message);
             }
 
-            _ = Task.Factory.StartNew(() => WriteMessages(), TaskCreationOptions.LongRunning);
+            doneEvent.Set();
+
+            Run();
         }
     }
 }

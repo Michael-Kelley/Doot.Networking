@@ -21,7 +21,7 @@ namespace Doot
 
         public void Write(LogCategory category, DateTime time, string message)
         {
-            logWriter.WriteLine($"[{time:u}] [{category}] {message}");
+            logWriter.WriteLine($"{time:G} | {category,-5} | {message}");
         }
     }
 }
