@@ -28,7 +28,7 @@ namespace Doot
 
             connectionsStore = new ConcurrentBag<SqliteConnection>();
             connections = new BlockingCollection<SqliteConnection>(connectionsStore, CONNECTION_POOL_SIZE);
-            
+
             for (int i = 0; i < CONNECTION_POOL_SIZE; i++)
                 connections.Add(new SqliteConnection("Data Source=doot.db"));
         }
@@ -95,6 +95,8 @@ namespace Doot
                 SELECT id
                 FROM account
                 WHERE email = $email;";
+            cmd.Parameters.AddWithValue("email", email);
+
             var reader = cmd.ExecuteReader();
 
             if (reader.HasRows)
@@ -105,6 +107,7 @@ namespace Doot
 
             reader.Dispose();
 
+            cmd = connection.CreateCommand();
             cmd.CommandText = @"
                 INSERT INTO account (email, password)
                 VALUES( $email, $password );";
