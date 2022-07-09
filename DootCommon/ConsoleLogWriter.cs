@@ -18,6 +18,9 @@ namespace Doot
                 case LogCategory.Warn:
                     Console.ForegroundColor = ConsoleColor.Yellow;
                     break;
+                case LogCategory.Debug:
+                    Console.ForegroundColor = ConsoleColor.Blue;
+                    break;
             }
 
             Console.WriteLine($"{time:G} | {category,-5} | {message}");

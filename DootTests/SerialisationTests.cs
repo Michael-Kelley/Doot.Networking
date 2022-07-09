@@ -5,22 +5,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Doot.Tests
 {
-    class MySimpleClass : ISerialisable, IEquatable<MySimpleClass>
+    partial class MySimpleClass : ISerialisable, IEquatable<MySimpleClass>
     {
         public long ALong;
         public string AString;
-
-        public void Serialise(MessageSerialiser serialiser)
-        {
-            serialiser.Write(ALong);
-            serialiser.Write(AString);
-        }
-
-        public void Deserialise(MessageDeserialiser deserialiser)
-        {
-            deserialiser.Read(out ALong);
-            deserialiser.Read(out AString);
-        }
 
         public bool Equals(MySimpleClass other)
         {
@@ -36,7 +24,7 @@ namespace Doot.Tests
         }
     }
 
-    class MyStructClass : ISerialisable, IEquatable<MyStructClass>
+    partial class MyStructClass : ISerialisable, IEquatable<MyStructClass>
     {
         public struct MyNestedStruct
         {
@@ -46,16 +34,6 @@ namespace Doot.Tests
         }
 
         public MyNestedStruct AStruct;
-
-        public void Serialise(MessageSerialiser serialiser)
-        {
-            serialiser.Write(AStruct);
-        }
-
-        public void Deserialise(MessageDeserialiser deserialiser)
-        {
-            deserialiser.Read(out AStruct);
-        }
 
         public bool Equals(MyStructClass other)
         {
@@ -70,27 +48,13 @@ namespace Doot.Tests
         }
     }
 
-    class MyClassClass : ISerialisable, IEquatable<MyClassClass>
+    partial class MyClassClass : ISerialisable, IEquatable<MyClassClass>
     {
-        public class MyNestedClass : ISerialisable, IEquatable<MyNestedClass>
+        public partial class MyNestedClass : ISerialisable, IEquatable<MyNestedClass>
         {
             public ulong AULong;
             public long ALong;
             public double ADouble;
-
-            public void Serialise(MessageSerialiser serialiser)
-            {
-                serialiser.Write(AULong);
-                serialiser.Write(ALong);
-                serialiser.Write(ADouble);
-            }
-
-            public void Deserialise(MessageDeserialiser deserialiser)
-            {
-                deserialiser.Read(out AULong);
-                deserialiser.Read(out ALong);
-                deserialiser.Read(out ADouble);
-            }
 
             public bool Equals(MyNestedClass other)
             {
@@ -108,17 +72,6 @@ namespace Doot.Tests
         }
 
         public MyNestedClass AClass;
-
-        public void Serialise(MessageSerialiser serialiser)
-        {
-            serialiser.Write(AClass);
-        }
-
-        public void Deserialise(MessageDeserialiser deserialiser)
-        {
-            deserialiser.Read(out ISerialisable _AClass);
-            AClass = (MyNestedClass)_AClass;
-        }
 
         public bool Equals(MyClassClass other)
         {

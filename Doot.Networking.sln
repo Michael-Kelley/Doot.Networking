@@ -17,6 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DootCommon", "DootCommon\Do
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DootTests", "DootTests\DootTests.csproj", "{7D6E6A34-A2EA-4DE0-92A2-454C1E3FFC3B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DootSourceGenerators", "DootSourceGenerators\DootSourceGenerators.csproj", "{952D0BAE-90AF-433D-B3F4-264A3A127727}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{61B312B0-AE85-4239-8508-CBE4306A2FAA}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +54,10 @@ Global
 		{7D6E6A34-A2EA-4DE0-92A2-454C1E3FFC3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D6E6A34-A2EA-4DE0-92A2-454C1E3FFC3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D6E6A34-A2EA-4DE0-92A2-454C1E3FFC3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{952D0BAE-90AF-433D-B3F4-264A3A127727}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{952D0BAE-90AF-433D-B3F4-264A3A127727}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{952D0BAE-90AF-433D-B3F4-264A3A127727}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{952D0BAE-90AF-433D-B3F4-264A3A127727}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

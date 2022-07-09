@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\DootCommon\DootCommon.csproj" />
     <ProjectReference Include="..\..\DootServer\DootServer.csproj" />
+	<ProjectReference Include="..\..\DootSourceGenerators\DootSourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>
