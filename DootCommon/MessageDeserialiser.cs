@@ -107,6 +107,12 @@ namespace Doot
                             arguments[i] = null;
                             break;
                         }
+                    case FieldType.Boolean:
+                        {
+                            Read(out bool fieldValue);
+                            arguments[i] = fieldValue;
+                            break;
+                        }
                     case FieldType.UInt64:
                         {
                             Read(out ulong fieldValue);
@@ -192,6 +198,12 @@ namespace Doot
                 case FieldType.Null:
                     {
                         returnValue = null;
+                        break;
+                    }
+                case FieldType.Boolean:
+                    {
+                        Read(out bool value);
+                        returnValue = value;
                         break;
                     }
                 case FieldType.UInt64:

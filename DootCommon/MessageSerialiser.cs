@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-
-
+using System.Threading;
 
 namespace Doot
 {
@@ -14,11 +13,13 @@ namespace Doot
 
         readonly byte[] writeBuffer;
         int position;
+        SemaphoreSlim semaphore;
 
         public MessageSerialiser()
         {
             writeBuffer = new byte[MAXIMUM_MESSAGE_SIZE];
             position = 0;
+            semaphore = new SemaphoreSlim(1, 1);
         }
 
         public static void RegisterClass<T>()
@@ -28,6 +29,8 @@ namespace Doot
 
         public (byte[] Data, int Length) SerialiseRPCRequest(ulong serial, string funcName, object[] arguments)
         {
+            semaphore.Wait();
+
             position = 0;
             Write(MessageType.RpcRequest);
             Skip(sizeof(int));  // Skip length for now
@@ -43,7 +46,12 @@ namespace Doot
                 {
                     Write(FieldType.Null);
                 }
-                if (obj is ulong u64Obj)
+                if (obj is bool bObj)
+                {
+                    Write(FieldType.Boolean);
+                    Write(bObj);
+                }
+                else if (obj is ulong u64Obj)
                 {
                     Write(FieldType.UInt64);
                     Write(u64Obj);
@@ -79,11 +87,18 @@ namespace Doot
             position = sizeof(MessageType);
             Write(length - (sizeof(MessageType) + sizeof(int)));
 
-            return (writeBuffer, length);
+            var buf = new byte[length];
+            Buffer.BlockCopy(writeBuffer, 0, buf, 0, length);
+
+            semaphore.Release();
+
+            return (buf, length);
         }
 
         public (byte[] Data, int Length) SerialiseRPCResponse(ulong serial, object returnValue)
         {
+            semaphore.Wait();
+
             position = 0;
             Write(MessageType.RpcResponse);
             Skip(sizeof(int));  // Skip length for now
@@ -92,6 +107,11 @@ namespace Doot
             if (returnValue == null)
             {
                 Write(FieldType.Null);
+            }
+            else if (returnValue is bool bReturnValue)
+            {
+                Write(FieldType.Boolean);
+                Write(bReturnValue);
             }
             else if (returnValue is ulong u64ReturnValue)
             {
@@ -127,7 +147,12 @@ namespace Doot
             position = sizeof(MessageType);
             Write(length - (sizeof(MessageType) + sizeof(int)));    // Length
 
-            return (writeBuffer, length);
+            var buf = new byte[length];
+            Buffer.BlockCopy(writeBuffer, 0, buf, 0, length);
+
+            semaphore.Release();
+
+            return (buf, length);
         }
 
         void Skip(int count)

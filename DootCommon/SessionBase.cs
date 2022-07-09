@@ -22,6 +22,7 @@ namespace Doot
         readonly MessageSerialiser serialiser;
         readonly Dictionary<ulong, TaskCompletionSource<object>> rpcRequests;
         readonly Random rand;
+        readonly SemaphoreSlim writeSemaphore;
 
         IRPCManager rpcManager;
         int readIndex;
@@ -38,6 +39,8 @@ namespace Doot
             serialiser = new MessageSerialiser();
             rpcRequests = new Dictionary<ulong, TaskCompletionSource<object>>();
             rand = new Random();
+            writeSemaphore = new SemaphoreSlim(1, 1);
+            // TODO: Note to self: fix writing to same client from multiple threads in cabal emulator
         }
 
         protected void SetRPCManager(IRPCManager rpcManager)
@@ -47,11 +50,13 @@ namespace Doot
 
         public void ReceiveLoop(CancellationToken cancellation)
         {
-            _ = Task.Factory.StartNew(() => Receive(cancellation), CancellationToken.None);
+            _ = Task.Run(() => Receive(cancellation));
         }
 
         protected async void Receive(CancellationToken cancellation)
         {
+            await Task.Yield();
+
             int read;
 
             try
@@ -90,7 +95,7 @@ namespace Doot
                             var returnValue = rpcManager.GetRPCFunction(funcName)(this, arguments);
                             var response = serialiser.SerialiseRPCResponse(serial, returnValue);
 
-                            await stream.WriteAsync(response.Data, 0, response.Length, cancellation);
+                            await Write(response.Data, response.Length, cancellation);
 
                             available -= consumed;
 
@@ -111,7 +116,7 @@ namespace Doot
                                 goto Next;
                             }
 
-                            Logger.Log(LogCategory.Debug, $"RPC Response: {serial}");
+                            Logger.Log(LogCategory.Debug, $"RPC response: {serial}");
                             var tcs = rpcRequests[serial];
                             rpcRequests.Remove(serial);
                             tcs.SetResult(returnValue);
@@ -139,8 +144,10 @@ namespace Doot
             ReceiveLoop(cancellation);
         }
 
-        public Task<object> CallRemoteProcedure(string name, params object[] arguments)
+        public async Task<object> CallRemoteProcedure(string name, params object[] arguments)
         {
+            await Task.Yield();
+
             ulong serial;
 
             do
@@ -158,9 +165,21 @@ namespace Doot
             var tcs = new TaskCompletionSource<object>();
             rpcRequests[serial] = tcs;
 
-            _ = stream.WriteAsync(request.Data, 0, request.Length);
+            await Write(request.Data, request.Length, CancellationToken.None);
 
-            return tcs.Task;
+            return await tcs.Task;
+        }
+
+        public async Task Write(byte[] data, int length, CancellationToken cancellation)
+        {
+            await writeSemaphore.WaitAsync();
+
+            try {
+                await stream.WriteAsync(data, 0, length);
+            }
+            finally {
+                writeSemaphore.Release();
+            }
         }
     }
 }
